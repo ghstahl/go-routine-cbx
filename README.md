@@ -1,6 +1,9 @@
 # go-routine-cbx
 
-This is an excercise in using go routines to handle a request and response back via a passed in channel.
+This is an excercise in using go routines to handle a request and respond back via a passed in channel.
+
+I need to research the grpc stuff to see if I can use that engine for internal pub/reply stuff.
+
 
 The request channel buffer is a factor of runtime.NumCPU.  i.e. runtime.NumCPU() * factor
 
