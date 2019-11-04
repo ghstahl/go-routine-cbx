@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
-	"unsafe"
 
 	"github.com/ghstahl/go-routine-cbx/messages"
 )
@@ -18,7 +17,7 @@ type cacheContainer struct {
 type HanlderContainer struct {
 	handler messages.MessageHandler
 	ops     uint64
-	cache   *cacheContainer
+	cache   atomic.Value
 }
 
 const (
@@ -33,11 +32,8 @@ func NewHandlerContainer(handler messages.MessageHandler) *HanlderContainer {
 		handler: handler,
 		ops:     0,
 	}
-
-	var unsafePPT = (*unsafe.Pointer)(unsafe.Pointer(&container.cache))
 	var cc cacheContainer
-	atomic.StorePointer(
-		unsafePPT, unsafe.Pointer(&cc))
+	container.cache.Store(cc)
 
 	return container
 }
@@ -49,16 +45,13 @@ func (container *HanlderContainer) GetOps() uint64 {
 }
 
 func (container *HanlderContainer) UpsertCache(reply interface{}) {
-	var unsafePPT = (*unsafe.Pointer)(unsafe.Pointer(&container.cache))
 	var cc cacheContainer
 	cc.Cache = reply
-	atomic.SwapPointer(
-		unsafePPT, unsafe.Pointer(&cc))
+	container.cache.Store(cc)
 }
 func (container *HanlderContainer) GetCache() interface{} {
-	var unsafePPT = (*unsafe.Pointer)(unsafe.Pointer(&container.cache))
-	cc := (*cacheContainer)(atomic.LoadPointer(unsafePPT))
-	return cc.Cache
+	data := container.cache.Load().(cacheContainer)
+	return data.Cache
 }
 
 type Runner interface {
